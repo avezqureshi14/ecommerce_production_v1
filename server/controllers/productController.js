@@ -1,7 +1,7 @@
 const Product = require("../models/productModel");
 const ErrorHandler = require("../utils/errorhandler");
 const catchAsyncErrors = require("../middleware/catchAsyncErrors");
-const ApiFeatures = require("../utils/apifeatures")
+const ApiFeatures = require("../utils/apifeatures");
 //Create Product -- Admin
 exports.createProduct = catchAsyncErrors(async (req, res, next) => {
   const product = await Product.create(req.body);
@@ -12,18 +12,26 @@ exports.createProduct = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-//get all Products
 exports.getAllProducts = catchAsyncErrors(async (req, res, next) => {
-  
-  const apiFeatures = new ApiFeatures(Product.find(),req.query).search().filter();
-  // const product = await Product.create(req.body);
-  const product = await apiFeatures.query;
+  const resultPerPage = 8;
 
-  res.status(201).json({
+  const apiFeature = new ApiFeatures(Product.find(), req.query)
+    .search()
+    .filter()
+    .pagination(resultPerPage);
+
+  const products = await apiFeature.query;
+
+  const productsCount = products.length;
+
+  res.status(200).json({
     success: true,
-    product,
+    products,
+    productsCount,
+    resultPerPage,
   });
 });
+
 
 //update product
 exports.updateProduct = catchAsyncErrors(async (req, res, next) => {
@@ -84,16 +92,14 @@ exports.deleteProduct = catchAsyncErrors(async (req, res, next) => {
   }
 });
 // Get Product Details
-exports.getProductDetails = catchAsyncErrors(
-  async (req, res, next) => {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return next(new ErrorHandler("Product not found", 404));
-    }
-  
-    res.status(200).json({
-      success: true,
-      product,
-    });
+exports.getProductDetails = catchAsyncErrors(async (req, res, next) => {
+  const product = await Product.findById(req.params.id);
+  if (!product) {
+    return next(new ErrorHandler("Product not found", 404));
   }
-);
+
+  res.status(200).json({
+    success: true,
+    product,
+  });
+});
